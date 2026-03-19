@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pyörävuokraamo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #searchInput {
+      padding: 8px;
+      width: 250px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #bikeList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .bike-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 15px;
+      width: 250px;
+      cursor: pointer;
+    }
+
+    .bike-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .bike-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .bike-card h3 {
+      margin: 0 0 5px 0;
+      font-size: 1rem;
+    }
+
+    .bike-card p {
+      margin: 3px 0;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    /* Modal */
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+
+    #modalBox {
+      background: white;
+      margin: 80px auto;
+      padding: 25px;
+      max-width: 480px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    #modalBox img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+
+    #closeBtn {
+      position: absolute;
+      top: 10px; right: 15px;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🚲 Pyörävuokraamo</h1>
+  <p>Selaa saatavilla olevia pyöriä</p>
+
+  <input type="text" id="searchInput" placeholder="Hae pyörää..." oninput="filterBikes()">
+
+  <div id="loading">Ladataan pyöriä...</div>
+  <div id="bikeList"></div>
+
+  <!-- Modal -->
+  <div id="modal" onclick="closeModal(event)">
+    <div id="modalBox">
+      <button id="closeBtn" onclick="document.getElementById('modal').style.display='none'">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://www.cc.puv.fi/~hmh/fed/fedApi/bikes/';
+    let bikes = [];
+
+    // Haetaan kaikki pyörät APIsata
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        bikes = data;
+        document.getElementById('loading').style.display = 'none';
+        showBikes(bikes);
+      })
+      .catch(err => {
+        document.getElementById('loading').textContent = 'Virhe ladattaessa dataa.';
+        console.error(err);
+      });
+
+    function showBikes(list) {
+      const container = document.getElementById('bikeList');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = '<p>Ei tuloksia.</p>';
+        return;
+      }
+
+      list.forEach(bike => {
+        const card = document.createElement('div');
+        card.className = 'bike-card';
+        card.onclick = () => openModal(bike.id);
+
+        card.innerHTML = `
+          ${bike.img_url ? `<img src="${bike.img_url}" alt="${bike.model}">` : ''}
+          <h3>${bike.model}</h3>
+          <p><strong>Valmistaja:</strong> ${bike.manuf}</p>
+          <p><strong>Vaihteet:</strong> ${bike.gear} (${bike.gear_manuf})</p>
+          <p><strong>Koko:</strong> ${bike.size}</p>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function filterBikes() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = bikes.filter(b =>
+        b.model.toLowerCase().includes(q) ||
+        b.manuf.toLowerCase().includes(q)
+      );
+      showBikes(filtered);
+    }
+
+    // Haetaan yksittäinen pyörä ID:n perusteella
+    function openModal(id) {
+      document.getElementById('modal').style.display = 'block';
+      document.getElementById('modalContent').innerHTML = '<p>Ladataan...</p>';
+
+      fetch(API_URL + '?id=' + id)
+        .then(res => res.json())
+        .then(b => {
+          document.getElementById('modalContent').innerHTML = `
+            ${b.img_url ? `<img src="${b.img_url}" alt="${b.model}">` : ''}
+            <h2>${b.model}</h2>
+            <p><strong>Valmistaja:</strong> ${b.manuf}</p>
+            <p><strong>Koko:</strong> ${b.size}</p>
+            <p><strong>Vaihteet:</strong> ${b.gear} kpl (${b.gear_manuf})</p>
+            <p><strong>Lisätiedot:</strong> ${b.details || 'Ei lisätietoja'}</p>
+          `;
+        });
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById('modal')) {
+        document.getElementById('modal').style.display = 'none';
+      }
+    }
+  </script>
+
+</body>
+</html>
