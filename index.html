@@ -63,7 +63,7 @@
       color: #555;
     }
 
-    /* Modal */
+    
     #modal {
       display: none;
       position: fixed;
@@ -115,7 +115,7 @@
   <div id="loading">Ladataan pyöriä...</div>
   <div id="bikeList"></div>
 
-  <!-- Modal -->
+ 
   <div id="modal" onclick="closeModal(event)">
     <div id="modalBox">
       <button id="closeBtn" onclick="document.getElementById('modal').style.display='none'">✕</button>
@@ -127,7 +127,7 @@
     const API_URL = 'https://www.cc.puv.fi/~hmh/fed/fedApi/bikes/';
     let bikes = [];
 
-    // Haetaan kaikki pyörät APIsata
+    
     fetch(API_URL)
       .then(res => res.json())
       .then(data => {
@@ -175,7 +175,7 @@
       showBikes(filtered);
     }
 
-    // Haetaan yksittäinen pyörä ID:n perusteella
+    
     function openModal(id) {
       document.getElementById('modal').style.display = 'block';
       document.getElementById('modalContent').innerHTML = '<p>Ladataan...</p>';
